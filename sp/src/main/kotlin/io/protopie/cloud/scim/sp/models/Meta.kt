@@ -18,4 +18,6 @@ data class Meta(
     val lastModified: LocalDateTime? = null,
     @JsonProperty("location")
     val location: String? = null,
+    @JsonProperty("version")
+    val version: String? = null,
 )

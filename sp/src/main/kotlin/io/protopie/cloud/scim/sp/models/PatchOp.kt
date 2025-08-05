@@ -14,7 +14,25 @@ data class PatchOp(
 )
 
 /**
- * 패치 작업 항목
+ * SCIM PATCH 작업 항목
+ * RFC7644에 따른 PATCH 작업 정의
+ * 다음과 같은 두 가지 방식을 모두 지원합니다:
+ *
+ * 1. 'path'가 없는 경우: 'value'에 포함된 속성 기반으로 동작합니다.
+ * 예시:
+ * {
+ *   "op": "replace",
+ *   "value": {
+ *     "name": { "givenName": "David" }
+ *   }
+ * }
+ *
+ * 2. 'path'가 있는 경우: 'path' 값에 따라 특정 속성이나 필터링된 요소를 대상으로 작업합니다.
+ * 예시:
+ * {
+ *   "op": "remove",
+ *   "path": "members[value eq \"36990822-eda3-4f4a-882a-abef29ae8905\"]"
+ * }
  */
 data class Operation(
     @JsonProperty("op")

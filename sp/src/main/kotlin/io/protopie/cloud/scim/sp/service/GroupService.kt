@@ -2,6 +2,7 @@ package io.protopie.cloud.scim.sp.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.protopie.cloud.scim.sp.models.*
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.util.*
 
@@ -11,7 +12,20 @@ import java.util.*
 class GroupService(
     private val userService: UserService,
 ) {
+    private val logger = LoggerFactory.getLogger(GroupService::class.java)
     private val objectMapper = jacksonObjectMapper()
+
+    /**
+     * members[value eq "uuid"] 형식의 경로에서 필터 추출
+     * @return 필터에 지정된 value 값 또는 null
+     */
+    private fun parseMemberValueFilter(path: String): String? {
+        // members[value eq "uuid"] 패턴 확인
+        val pattern = """members\[value eq "([a-z0-9-]+)"\]"""
+        val regex = Regex(pattern)
+        val matchResult = regex.find(path)
+        return matchResult?.groups?.get(1)?.value
+    }
 
     // 임시 메모리 저장소
     private val groups = mutableMapOf<String, Group>()
@@ -144,6 +158,10 @@ class GroupService(
         val group = groups[groupId] ?: return null
         var patchedGroup = group
 
+        logger.info(
+            "Patching group $groupId with operations: ${patchOp.operations.map { "${it.op}${it.path?.let { p -> " path=$p" } ?: ""}" }}",
+        )
+
         for (operation in patchOp.operations) {
             when (operation.op.lowercase()) {
                 "add" -> {
@@ -183,51 +201,50 @@ class GroupService(
                                 }
                             }
                         }
-
                         patchedGroup = patchedGroup.copy(members = newMembers)
                     }
                 }
                 "replace" -> {
-                    if (operation.path == "displayName" && operation.value != null) {
-                        patchedGroup = patchedGroup.copy(displayName = operation.value.asText())
-                    } else if (operation.path == "members" && operation.value != null) {
-                        val newMembers = mutableListOf<Member>()
-                        if (operation.value.isArray) {
-                            operation.value.forEach { memberNode ->
-                                val member = objectMapper.treeToValue(memberNode, Member::class.java)
-                                // 멤버 정보 보강
-                                val user = userService.getUserById(member.value)
-                                val updatedMember =
-                                    if (user != null && member.display == null) {
-                                        member.copy(display = user.userName)
-                                    } else {
-                                        member
-                                    }
-                                newMembers.add(updatedMember)
-                            }
+                    operation.value?.let { textNode ->
+                        val rootNode = objectMapper.readTree(textNode.asText())
+                        if (rootNode.has("displayName")) {
+                            patchedGroup = patchedGroup.copy(displayName = rootNode.get("displayName").asText())
                         }
-                        patchedGroup = patchedGroup.copy(members = newMembers)
+                        if (rootNode.has("members")) {
+                            val newMembers = mutableListOf<Member>()
+                            if (rootNode.isArray) {
+                                rootNode.forEach { memberNode ->
+                                    val member = objectMapper.treeToValue(memberNode, Member::class.java)
+                                    // 멤버 정보 보강
+                                    val user = userService.getUserById(member.value)
+                                    val updatedMember =
+                                        if (user != null && member.display == null) {
+                                            member.copy(display = user.userName)
+                                        } else {
+                                            member
+                                        }
+                                    newMembers.add(updatedMember)
+                                }
+                            }
+                            patchedGroup = patchedGroup.copy(members = newMembers)
+                        }
                     }
                 }
                 "remove" -> {
-                    if (operation.path == "members" && operation.value != null) {
-                        val membersToRemove = mutableListOf<String>()
-                        if (operation.value.isArray) {
-                            operation.value.forEach { memberNode ->
-                                if (memberNode.has("value")) {
-                                    membersToRemove.add(memberNode.get("value").asText())
-                                }
-                            }
-                        } else if (operation.value.has("value")) {
-                            membersToRemove.add(operation.value.get("value").asText())
+                    // 필터 기반 경로 처리 (members[value eq "uuid"] 형식)
+                    if (operation.path != null && operation.path.startsWith("members[")) {
+                        logger.info("Processing filter-based path: ${operation.path}")
+                        val memberIdToRemove = parseMemberValueFilter(operation.path)
+                        if (memberIdToRemove != null) {
+                            logger.info("Removing member with ID: $memberIdToRemove")
+                            // 특정 멤버 하나만 제거
+                            val newMembers =
+                                patchedGroup.members?.filter { member ->
+                                    member.value != memberIdToRemove
+                                } ?: listOf()
+
+                            patchedGroup = patchedGroup.copy(members = newMembers)
                         }
-
-                        val newMembers =
-                            patchedGroup.members?.filter { member ->
-                                !membersToRemove.contains(member.value)
-                            } ?: listOf()
-
-                        patchedGroup = patchedGroup.copy(members = newMembers)
                     }
                 }
             }
