@@ -1,0 +1,697 @@
+# sp-spec-final-v1.5.0.yaml
+openapi: 3.0.3
+info:
+  title: "SCIM Service Provider (SP) API"
+  description: |
+    IdP로부터 사용자 및 그룹 프로비저닝 요청을 수신하는 SCIM 2.0 SP의 API 명세입니다.
+    User 및 Group 모델을 RFC 7643 Core Schema에 맞게 상세히 정의했습니다.
+  version: "1.5.0"
+
+servers:
+  - url: http://localhost:19090/scim/v2
+    description: Local SCIM SP Server
+
+security:
+  - scimAuth: []
+
+paths:
+  #--- User Endpoints ---#
+  /Users:
+    get:
+      summary: 사용자 목록 조회
+      description: IdP가 SP에 있는 사용자 목록을 조회합니다.
+      tags: [Users]
+      parameters:
+        - name: startIndex
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: filter
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 사용자 목록 조회 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+    post:
+      summary: 사용자 생성
+      description: IdP가 SP에 새로운 사용자를 생성하도록 요청합니다.
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: 사용자 생성 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: 이미 존재하는 사용자
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /Users/{userId}:
+    get:
+      summary: 특정 사용자 조회
+      description: IdP가 SP의 특정 사용자 정보를 조회합니다.
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 사용자 정보
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: 사용자 정보 전체 교체
+      description: IdP가 SP의 사용자 정보를 새로운 정보로 전체 교체합니다.
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: 사용자 정보 교체 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      summary: 사용자 정보 부분 수정
+      description: IdP가 SP의 사용자 정보를 부분적으로 수정합니다.
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/PatchOp'
+      responses:
+        '200':
+          description: 사용자 정보 수정 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      summary: 사용자 삭제 (비활성화)
+      description: IdP가 SP에서 사용자를 제거하도록 요청합니다.
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 사용자 삭제 성공
+
+  #--- Group Endpoints ---#
+  /Groups:
+    get:
+      summary: 그룹 목록 조회
+      description: IdP가 SP에 있는 그룹 목록을 조회합니다.
+      tags: [Groups]
+      parameters:
+        - name: startIndex
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: 그룹 목록 조회 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/GroupListResponse'
+    post:
+      summary: 그룹 생성
+      description: IdP가 SP에 새로운 그룹을 생성하도록 요청합니다.
+      tags: [Groups]
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          description: 그룹 생성 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '409':
+          description: 이미 존재하는 그룹
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /Groups/{groupId}:
+    get:
+      summary: 특정 그룹 조회
+      description: IdP가 SP의 특정 그룹 정보를 조회합니다.
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 그룹 정보
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+    put:
+      summary: 그룹 정보 전체 교체
+      description: IdP가 SP의 그룹 정보를 새로운 정보로 전체 교체합니다.
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          description: 그룹 정보 교체 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+    patch:
+      summary: 그룹 정보 부분 수정
+      description: IdP가 SP의 그룹 정보를 부분적으로 수정합니다.
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: '#/components/schemas/PatchOp'
+      responses:
+        '200':
+          description: 그룹 정보 수정 성공
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+    delete:
+      summary: 그룹 삭제
+      description: IdP가 SP에서 그룹을 제거하도록 요청합니다.
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 그룹 삭제 성공
+
+  #--- Discovery Endpoints ---#
+  /ServiceProviderConfig:
+    get:
+      summary: SCIM 서비스 제공자 설정 조회
+      tags: [Discovery]
+      responses:
+        '200':
+          description: 서비스 제공자 설정 정보
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/ServiceProviderConfig'
+
+  /Schemas:
+    get:
+      summary: 지원하는 모든 스키마 목록 조회
+      tags: [Discovery]
+      responses:
+        '200':
+          description: 스키마 목록
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/SchemaListResponse'
+
+  /Schemas/{schemaUrn}:
+    get:
+      summary: 특정 스키마 상세 조회
+      tags: [Discovery]
+      parameters:
+        - name: schemaUrn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 스키마 상세 정보
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/SchemaDefinition'
+
+  /ResourceTypes:
+    get:
+      summary: 지원하는 리소스 타입 목록 조회
+      tags: [Discovery]
+      responses:
+        '200':
+          description: 리소스 타입 목록
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/ResourceTypeListResponse'
+
+components:
+  securitySchemes:
+    scimAuth:
+      type: http
+      scheme: bearer
+      description: "IdP가 SP를 호출할 때 사용하는 Bearer Token"
+
+  schemas:
+    #--- Common Schemas ---#
+    Meta:
+      type: object
+      readOnly: true
+      properties:
+        resourceType:
+          type: string
+        created:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        location:
+          type: string
+          format: uri
+    Error:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        detail:
+          type: string
+        status:
+          type: string
+    PatchOp:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        Operations:
+          type: array
+          items:
+            type: object
+            properties:
+              op:
+                type: string
+                enum: [add, replace, remove]
+              path:
+                type: string
+              value:
+                type: object
+
+    #--- User Schema (RFC 7643 Section 4.1) ---#
+    User:
+      type: object
+      required:
+        - schemas
+        - userName
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+          description: "항상 urn:ietf:params:scim:schemas:core:2.0:User 값을 포함해야 합니다."
+        id:
+          type: string
+          readOnly: true
+          description: "서비스 제공자(SP)에 의해 할당된 고유 식별자"
+        externalId:
+          type: string
+          description: "IdP에서 사용하는 사용자의 고유 식별자"
+        userName:
+          type: string
+          description: "사용자 식별을 위한 고유한 값 (예: 이메일 주소)"
+        name:
+          type: object
+          properties:
+            formatted:
+              type: string
+              description: "전체 이름 (예: Ms. Barbara J Jensen, III)"
+            familyName:
+              type: string
+              description: "성 (예: Jensen)"
+            givenName:
+              type: string
+              description: "이름 (예: Barbara)"
+            middleName:
+              type: string
+            honorificPrefix:
+              type: string
+              description: "접두사 (예: Ms.)"
+            honorificSuffix:
+              type: string
+              description: "접미사 (예: III)"
+        displayName:
+          type: string
+          description: "UI에 표시하기 적합한 이름"
+        nickName:
+          type: string
+        profileUrl:
+          type: string
+          format: uri
+        title:
+          type: string
+          description: "직책"
+        userType:
+          type: string
+          description: "사용자 유형 (예: Employee, Contractor)"
+        preferredLanguage:
+          type: string
+          description: "선호 언어 (예: en-US)"
+        locale:
+          type: string
+          description: "로케일 (예: en-US)"
+        timezone:
+          type: string
+        active:
+          type: boolean
+          description: "계정 활성 상태"
+        password:
+          type: string
+          mutability: "writeOnly"
+          description: "쓰기 전용 속성"
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        phoneNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        ims:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        groups:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Member'
+        entitlements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        x509Certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplexAttribute'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ComplexAttribute:
+      type: object
+      properties:
+        value:
+          type: string
+        display:
+          type: string
+        type:
+          type: string
+        primary:
+          type: boolean
+
+    Address:
+      type: object
+      properties:
+        formatted:
+          type: string
+        streetAddress:
+          type: string
+        locality:
+          type: string
+        region:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        type:
+          type: string
+
+    #--- Group Schema (RFC 7643 Section 4.2) ---#
+    Group:
+      type: object
+      required:
+        - schemas
+        - displayName
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+          description: "항상 urn:ietf:params:scim:schemas:core:2.0:Group 값을 포함해야 합니다."
+        id:
+          type: string
+          readOnly: true
+        externalId:
+          type: string
+        displayName:
+          type: string
+          description: "그룹의 표시 이름"
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    Member:
+      type: object
+      properties:
+        value:
+          type: string
+          description: "멤버의 고유 ID (User의 id)"
+        ref:
+          type: string
+          format: uri
+          description: "멤버 리소스의 URI. OpenAPI에서는 '$ref' 대신 'ref'를 사용합니다."
+          readOnly: true
+        display:
+          type: string
+          description: "멤버의 표시 이름"
+          readOnly: true
+        type:
+          type: string
+          enum: [User, Group]
+
+    #--- List Response Schemas ---#
+    UserListResponse:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        totalResults:
+          type: integer
+        startIndex:
+          type: integer
+        itemsPerPage:
+          type: integer
+        Resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+    GroupListResponse:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        totalResults:
+          type: integer
+        startIndex:
+          type: integer
+        itemsPerPage:
+          type: integer
+        Resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+
+    SchemaListResponse:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        totalResults:
+          type: integer
+        Resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaDefinition'
+
+    ResourceTypeListResponse:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+        totalResults:
+          type: integer
+        Resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceType'
+
+    #--- Discovery Schemas ---#
+    ServiceProviderConfig:
+      type: object
+      # ... (definition as before)
+    SchemaDefinition:
+      type: object
+      required:
+        - name
+        - type
+        - multiValued
+        - description
+        - required
+      properties:
+        name:
+          type: string
+          description: "속성의 이름"
+        type:
+          type: string
+          enum: [string, boolean, decimal, integer, dateTime, reference, complex]
+          description: "속성의 데이터 타입"
+        multiValued:
+          type: boolean
+          description: "속성이 다중 값을 가질 수 있는지 여부"
+        description:
+          type: string
+          description: "속성에 대한 설명"
+        required:
+          type: boolean
+          description: "속성이 필수인지 여부"
+        caseExact:
+          type: boolean
+          description: "문자열 값의 대소문자 구분 여부"
+        mutability:
+          type: string
+          enum: [readOnly, readWrite, immutable, writeOnly]
+          description: "속성의 변경 가능성"
+        returned:
+          type: string
+          enum: [always, never, default, request]
+          description: "속성이 응답에 포함되는 조건"
+        uniqueness:
+          type: string
+          enum: [none, server, global]
+          description: "속성의 고유성 제약"
+        subAttributes:
+          type: array
+          items:
+            type: object
+          description: "복합 타입의 하위 속성"
+        canonicalValues:
+          type: array
+          items:
+            type: string
+          description: "권장되는 표준 값 목록"
+        referenceTypes:
+          type: array
+          items:
+            type: string
+          description: "참조 타입의 경우 참조할 수 있는 리소스 타입"
+    ResourceType:
+      type: object
+      # ... (definition as before)
