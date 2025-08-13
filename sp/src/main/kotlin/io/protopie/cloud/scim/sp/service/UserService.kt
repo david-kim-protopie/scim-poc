@@ -219,4 +219,13 @@ class UserService {
      * 사용자 삭제
      */
     fun deleteUser(externalId: String): Boolean = users.remove(externalId) != null
+
+    /**
+     * 모든 사용자 데이터 초기화 (테스트용)
+     */
+    fun clearAllUsers() {
+        logger.info("Clearing all users - count before: ${users.size}")
+        users.clear()
+        logger.info("All users cleared - count after: ${users.size}")
+    }
 }

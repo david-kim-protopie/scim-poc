@@ -46,6 +46,8 @@ class UsersApi {
                         try {
                             val user = call.receive<User>()
                             val createdUser = userService.createUser(user)
+                            // 응답 로깅 추가
+                            application.log.info("Created user with ID: ${createdUser.id}")
                             call.respondScim(HttpStatusCode.Created, createdUser)
                         } catch (e: IllegalStateException) {
                             val error =

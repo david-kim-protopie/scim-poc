@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.*
 import io.protopie.cloud.scim.sp.models.Error
 import io.protopie.cloud.scim.sp.models.Group
@@ -21,6 +22,9 @@ class GroupsApi(
     userService: UserService,
 ) {
     private val groupService = GroupService(userService)
+
+    // 테스트를 위한 접근자 메서드
+    fun getGroupService(): GroupService = groupService
 
     /**
      * Groups API 라우팅 설정

@@ -41,4 +41,6 @@ data class Operation(
     val path: String? = null,
     @JsonProperty("value")
     val value: JsonNode? = null,
-)
+) {
+    override fun toString(): String = "Operation(op='$op', path=$path, value=${value?.toString() ?: "null"})"
+}

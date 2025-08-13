@@ -155,6 +155,7 @@ class GroupService(
         groupId: String,
         patchOp: PatchOp,
     ): Group? {
+        logger.info("Received patch operation for group $groupId: $patchOp")
         val group = groups[groupId] ?: return null
         var patchedGroup = group
 
@@ -171,10 +172,28 @@ class GroupService(
                         val valueNode = operation.value
 
                         if (valueNode != null) {
-                            if (valueNode.isArray) {
-                                valueNode.forEach { memberNode ->
-                                    val member = objectMapper.treeToValue(memberNode, Member::class.java)
-                                    if (!newMembers.any { it.value == member.value }) {
+                            try {
+                                logger.info("Adding member with value node: $valueNode")
+                                if (valueNode.isArray) {
+                                    valueNode.forEach { memberNode ->
+                                        val member = objectMapper.treeToValue(memberNode, Member::class.java)
+                                        if (!newMembers.any { it.value == member.value }) {
+                                            // 멤버 정보 보강
+                                            val user = userService.getUserById(member.value)
+                                            val updatedMember =
+                                                if (user != null && member.display == null) {
+                                                    member.copy(display = user.userName)
+                                                } else {
+                                                    member
+                                                }
+                                            newMembers.add(updatedMember)
+                                        }
+                                    }
+                                } else {
+                                    // 직접 Member 객체로 변환 시도
+                                    val member = objectMapper.treeToValue(valueNode, Member::class.java)
+                                    logger.info("Parsed member: $member")
+                                    if (member != null && !newMembers.any { it.value == member.value }) {
                                         // 멤버 정보 보강
                                         val user = userService.getUserById(member.value)
                                         val updatedMember =
@@ -186,18 +205,25 @@ class GroupService(
                                         newMembers.add(updatedMember)
                                     }
                                 }
-                            } else {
-                                val member = objectMapper.treeToValue(valueNode, Member::class.java)
-                                if (!newMembers.any { it.value == member.value }) {
-                                    // 멤버 정보 보강
-                                    val user = userService.getUserById(member.value)
-                                    val updatedMember =
-                                        if (user != null && member.display == null) {
-                                            member.copy(display = user.userName)
-                                        } else {
-                                            member
-                                        }
-                                    newMembers.add(updatedMember)
+                            } catch (e: Exception) {
+                                logger.error("Error processing member value: $valueNode", e)
+                                // 실패한 경우 대체 방법으로 시도
+                                try {
+                                    val valueStr = valueNode.toString()
+                                    logger.info("Trying alternate parsing method with value: $valueStr")
+                                    val member = objectMapper.readValue(valueStr, Member::class.java)
+                                    if (!newMembers.any { it.value == member.value }) {
+                                        val user = userService.getUserById(member.value)
+                                        val updatedMember =
+                                            if (user != null && member.display == null) {
+                                                member.copy(display = user.userName)
+                                            } else {
+                                                member
+                                            }
+                                        newMembers.add(updatedMember)
+                                    }
+                                } catch (e2: Exception) {
+                                    logger.error("Failed alternate parsing method", e2)
                                 }
                             }
                         }
@@ -273,4 +299,11 @@ class GroupService(
      * 그룹 삭제
      */
     fun deleteGroup(groupId: String): Boolean = groups.remove(groupId) != null
+
+    /**
+     * 모든 그룹 데이터 초기화 (테스트용)
+     */
+    fun clearAllGroups() {
+        groups.clear()
+    }
 }

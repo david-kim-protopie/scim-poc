@@ -28,6 +28,24 @@ suspend inline fun <reified T : Any> ApplicationCall.respondScim(
     // SCIM 미디어 타입 헤더 설정
     this.response.header(HttpHeaders.ContentType, "application/scim+json")
 
+    // 로깅 추가
+    val messageType = T::class.simpleName
+    application.log.info("Responding with $status, type=$messageType, instance=${message::class.simpleName}")
+
+    // 응답 내용 검증
+    if (message !is Unit) {
+        try {
+            // 직렬화 가능한지 테스트
+            val jsonString =
+                com.fasterxml.jackson.module.kotlin
+                    .jacksonObjectMapper()
+                    .writeValueAsString(message)
+            application.log.info("Response JSON: $jsonString")
+        } catch (e: Exception) {
+            application.log.error("Error serializing response: ${e.message}")
+        }
+    }
+
     // 응답 전송
     respond(status, message)
 }

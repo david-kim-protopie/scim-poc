@@ -39,5 +39,19 @@ dependencies {
 
     // 테스트
     testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.kotlin.test.junit)
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
+
+    // 테스트 격리 및 순서 보장
+    maxParallelForks = 1
+    systemProperty("junit.jupiter.execution.order.random.seed", "0")
+    systemProperty("junit.jupiter.testinstance.lifecycle.default", "per_method")
 }

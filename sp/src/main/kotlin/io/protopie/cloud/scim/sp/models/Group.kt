@@ -19,4 +19,7 @@ data class Group(
     val members: List<Member>? = null,
     @JsonProperty("meta")
     val meta: Meta? = null,
-)
+) {
+    override fun toString(): String =
+        "Group(schemas=$schemas, id=$id, externalId=$externalId, displayName='$displayName', members=$members, meta=$meta)"
+}
