@@ -9,7 +9,11 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
+import io.protopie.cloud.scim.sp.database.Users
 import io.protopie.cloud.scim.sp.models.*
+import io.protopie.cloud.scim.sp.service.UserService
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -319,3 +323,20 @@ class GroupsApiTest {
             assertEquals(HttpStatusCode.NotFound, getResponse.status)
         }
 }
+
+/**
+ * 모든 사용자 데이터 초기화 (테스트용)
+ */
+fun UserService.clearAllUsers() =
+    transaction {
+        Users.deleteAll()
+    }
+
+/**
+ * 모든 그룹 데이터 초기화 (테스트용)
+ */
+fun io.protopie.cloud.scim.sp.service.GroupService.clearAllGroups() =
+    transaction {
+        io.protopie.cloud.scim.sp.database.Groups
+            .deleteAll()
+    }

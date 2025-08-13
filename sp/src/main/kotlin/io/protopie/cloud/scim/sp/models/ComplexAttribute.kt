@@ -9,13 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class ComplexAttribute(
     @JsonProperty("value")
     val value: String,
-
     @JsonProperty("display")
     val display: String? = null,
-
     @JsonProperty("type")
     val type: String? = null,
-
     @JsonProperty("primary")
-    val primary: Boolean = false
+    val primary: Boolean = false,
 )

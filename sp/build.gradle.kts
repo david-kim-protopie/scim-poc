@@ -32,7 +32,10 @@ dependencies {
     // 데이터베이스 관련
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.javatime)
     implementation(libs.h2)
+    implementation(libs.hikaricp)
 
     // 로깅
     implementation(libs.logback.classic)

@@ -8,13 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class Member(
     @JsonProperty("value")
     val value: String,
-
     @JsonProperty("ref")
     val ref: String? = null,
-
     @JsonProperty("display")
     val display: String? = null,
-
     @JsonProperty("type")
-    val type: String? = "User"
+    val type: String? = "User",
 )

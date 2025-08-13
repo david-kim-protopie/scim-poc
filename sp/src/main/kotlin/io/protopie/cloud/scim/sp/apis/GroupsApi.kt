@@ -5,7 +5,6 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.*
 import io.protopie.cloud.scim.sp.models.Error
 import io.protopie.cloud.scim.sp.models.Group

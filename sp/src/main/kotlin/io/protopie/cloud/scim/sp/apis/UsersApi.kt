@@ -17,7 +17,11 @@ import io.protopie.cloud.scim.sp.utils.respondScimNoContent
  * SCIM Users API 라우팅 설정
  */
 class UsersApi {
-    private val userService = UserService()
+    private val userService: UserService
+
+    init {
+        userService = UserService()
+    }
 
     /**
      * UserService 인스턴스를 반환

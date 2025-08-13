@@ -1,15 +1,25 @@
 package io.protopie.cloud.scim.sp.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.protopie.cloud.scim.sp.database.DatabaseFactory
 import io.protopie.cloud.scim.sp.models.*
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest {
     private lateinit var userService: UserService
     private val objectMapper = ObjectMapper()
+
+    @BeforeAll
+    fun setupDatabase() {
+        // 테스트용 데이터베이스 초기화
+        DatabaseFactory.initForTesting()
+    }
 
     @BeforeEach
     fun setup() {
